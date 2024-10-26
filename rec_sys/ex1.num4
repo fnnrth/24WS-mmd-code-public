@@ -1,0 +1,28 @@
+import numpy as np
+import data_util
+import math
+import scipy
+
+config = "space_hold"
+
+ratings, user_ids_voc, movie_ids_voc = data_util.load_movielens_tf(config)
+rated_by = {}   
+user_col = {}   
+
+
+max_movie_id = len(movie_ids_voc.get_vocabulary())  
+
+
+for rating in ratings:
+    # creating dictionary for rated_by(item)
+    if rating['movie_id'] not in rated_by:
+        rated_by[rating['movie_id']] = []
+    # adding all the users which rated the movie, but not sure if 0 or nan would indicate that the movie was not rated
+    if math.isnan(rating['user_rating']) == False:
+        rated_by[rating['movie_id']].append(rating['user_id'])
+    #creating dictionary for user_col(userID)
+    if rating['user_id'] not in user_col:
+        user_col[rating['user_id']] = scipy.csr_matrix((1, max_movie_id))  
+    # filling it up with the users rating but only with the ones which are not nan 
+    if math.isnan(rating['user_rating']) == False:  
+        user_col[rating['user_id']][0, rating['movie_id']] =  rating['user_rating'] 
