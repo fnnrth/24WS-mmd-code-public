@@ -2,8 +2,14 @@ import numpy as np
 import data_util
 import math
 import scipy
+import data_util
 
-config = "space_hold"
+class config:
+    max_rows: int = int(1e5)
+    dowload_url: str = "https://files.grouplens.org/datasets/movielens/ml-25m.zip"
+    download_dir: str = "C:/Users/Jonat/Downloads"
+    unzipped_dir: str = download_dir + "ml-25m/"
+    file_path: str = download_dir + "ml-25m/ratings.csv"
 
 ratings, user_ids_voc, movie_ids_voc = data_util.load_movielens_tf(config)
 rated_by = {}   
@@ -26,3 +32,6 @@ for rating in ratings:
     # filling it up with the users rating but only with the ones which are not nan 
     if math.isnan(rating['user_rating']) == False:  
         user_col[rating['user_id']][0, rating['movie_id']] =  rating['user_rating'] 
+
+print("Rated_by dictionary: "+rated_by)
+print("User_col dictionary: "+user_col)
