@@ -20,7 +20,11 @@ def center_and_nan_to_zero(matrix, axis=0):
 
 
 def cosine_sim(u, v):
-    return np.dot(u, v) / (np.linalg.norm(u) * np.linalg.norm(v))
+    dot = np.dot(u, v)
+    norm_u = np.linalg.norm(u)
+    norm_v = np.linalg.norm(v)
+    cosine_sim = dot / (norm_u * norm_v)
+    return cosine_sim
 
 
 def fast_cosine_sim(utility_matrix, vector, axis=0):
@@ -30,8 +34,9 @@ def fast_cosine_sim(utility_matrix, vector, axis=0):
     um_normalized = utility_matrix / norms
     # Compute the dot product of transposed normalized matrix and the vector
     dot = np.dot(um_normalized.T, vector)
+    norm_vector = np.linalg.norm(vector)
     # Scale by the vector norm
-    scaled = dot / np.linalg.norm(vector)
+    scaled = dot / norm_vector
     return scaled
 
 
@@ -73,7 +78,7 @@ def rate_all_items(orig_utility_matrix, user_index, neighborhood_size):
             sum_similarities = np.sum(similarities[best_among_who_rated])
             bawr_similarities = similarities[best_among_who_rated]
             bawr_ratings_item = orig_utility_matrix[item_index, best_among_who_rated]
-            bawr_avg_ratings_item = np.mean(
+            bawr_avg_ratings_item = np.nanmean(
                 orig_utility_matrix[:, best_among_who_rated]
             )
             rating_of_item = (
