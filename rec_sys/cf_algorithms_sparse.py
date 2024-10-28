@@ -42,3 +42,76 @@ def fast_centered_cosine_sim_sparse(
     dot = (matrix_cen.T).dot(vector_cen)
     scaled = dot / norm_vector
     return scaled
+
+
+def rate_all_items_sparse(orig_utility_matrix, user_index, neighborhood_size):
+    print(
+        f"\n>>> CF computation for UM w/ shape: "
+        + f"{orig_utility_matrix.shape}, user_index: {user_index}, neighborhood_size: {neighborhood_size}\n"
+    )
+
+    clean_utility_matrix = center_and_nan_to_zero_sparse(orig_utility_matrix)
+    """ Compute the rating of all items not yet rated by the user"""
+    user_col = clean_utility_matrix[:, user_index]
+    avg_rating_user = np.nanmean(orig_utility_matrix[:, user_index].toarray())
+    # Compute the cosine similarity between the user and all other users
+    similarities = fast_centered_cosine_sim_sparse(clean_utility_matrix, user_col)
+
+    def rate_one_item(item_index):
+        # If the user has already rated the item, return the rating
+        if not np.isnan(orig_utility_matrix[item_index, user_index]):
+            return orig_utility_matrix[item_index, user_index]
+
+        # Find the indices of users who rated the item
+        users_who_rated = np.where(
+            np.isnan(orig_utility_matrix[item_index, :].data) == False
+        )[0]
+        # From those, get indices of users with the highest similarity
+        best_among_who_rated = users_who_rated[
+            np.argsort(similarities[users_who_rated].toarray().flatten())
+        ]
+        # Select top neighborhood_size of them
+        best_among_who_rated = best_among_who_rated[-neighborhood_size:]
+        # Retain only those indices where the similarity is not nan
+        best_among_who_rated = best_among_who_rated[
+            ~np.isnan(similarities[best_among_who_rated].toarray().flatten())
+        ]
+        if best_among_who_rated.size > 0:
+            # Compute the rating of the item
+            # Compute the rating of the item
+            sum_similarities = np.sum(np.abs(similarities[best_among_who_rated].data))
+            bawr_similarities = similarities[best_among_who_rated].toarray().flatten()
+            bawr_ratings_item = (
+                orig_utility_matrix[item_index, best_among_who_rated]
+                .toarray()
+                .flatten()
+            )
+            rating_of_item = (
+                np.sum(bawr_similarities * bawr_ratings_item) / sum_similarities
+            )
+        else:
+            rating_of_item = np.nan
+        print(
+            f"item_idx: {item_index}, neighbors: {best_among_who_rated}, rating: {rating_of_item}"
+        )
+        return rating_of_item
+
+    num_items = orig_utility_matrix.shape[0]
+
+    # Get all ratings
+    ratings = list(map(rate_one_item, range(num_items)))
+    return ratings
+
+
+matrix = np.asarray(
+    [
+        [1.0, np.nan, 3.0, np.nan, np.nan, 5.0],
+        [np.nan, np.nan, 5.0, 4.0, np.nan, np.nan],
+        [2.0, 4.0, np.nan, 1.0, 2.0, np.nan],
+        [np.nan, 2.0, 4.0, np.nan, 5.0, np.nan],
+        [np.nan, np.nan, 4.0, 3.0, 4.0, 2.0],
+        [1.0, np.nan, 3.0, np.nan, 3.0, np.nan],
+    ]
+)
+matrix_sp = sp.csr_matrix(matrix)
+print(rate_all_items_sparse(matrix_sp, 0, 2))
