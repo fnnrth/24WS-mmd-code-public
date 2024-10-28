@@ -2,6 +2,7 @@
 # Algorithms for collaborative filtering
 
 import numpy as np
+from rec_sys.data_util import print_df_stats
 
 
 def complete_code(message):
@@ -48,6 +49,7 @@ def rate_all_items(orig_utility_matrix, user_index, neighborhood_size):
     )
 
     clean_utility_matrix = center_and_nan_to_zero(orig_utility_matrix)
+    print_df_stats("clean_utility_matrix", clean_utility_matrix)
     """ Compute the rating of all items not yet rated by the user"""
     user_col = clean_utility_matrix[:, user_index]
     # Compute the cosine similarity between the user and all other users

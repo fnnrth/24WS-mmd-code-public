@@ -1,6 +1,8 @@
 import numpy as np
 import scipy.sparse as sp
 
+from rec_sys.data_util import print_df_stats
+
 
 def center_and_nan_to_zero_sparse(matrix: sp.csr_matrix, axis=0):
     """Center the matrix and replace nan values with zeros"""
@@ -52,8 +54,8 @@ def rate_all_items_sparse(orig_utility_matrix, user_index, neighborhood_size):
 
     clean_utility_matrix = center_and_nan_to_zero_sparse(orig_utility_matrix)
     """ Compute the rating of all items not yet rated by the user"""
+    print_df_stats("clean_utility_matrix_sparse", clean_utility_matrix)
     user_col = clean_utility_matrix[:, user_index]
-    avg_rating_user = np.nanmean(orig_utility_matrix[:, user_index].toarray())
     # Compute the cosine similarity between the user and all other users
     similarities = fast_centered_cosine_sim_sparse(clean_utility_matrix, user_col)
 
@@ -94,6 +96,7 @@ def rate_all_items_sparse(orig_utility_matrix, user_index, neighborhood_size):
         print(
             f"item_idx: {item_index}, neighbors: {best_among_who_rated}, rating: {rating_of_item}"
         )
+
         return rating_of_item
 
     num_items = orig_utility_matrix.shape[0]
