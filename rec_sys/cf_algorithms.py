@@ -50,7 +50,6 @@ def rate_all_items(orig_utility_matrix, user_index, neighborhood_size):
     clean_utility_matrix = center_and_nan_to_zero(orig_utility_matrix)
     """ Compute the rating of all items not yet rated by the user"""
     user_col = clean_utility_matrix[:, user_index]
-    avg_rating_user = np.mean(user_col)
     # Compute the cosine similarity between the user and all other users
     similarities = fast_cosine_sim(clean_utility_matrix, user_col)
 
@@ -75,16 +74,11 @@ def rate_all_items(orig_utility_matrix, user_index, neighborhood_size):
         ]
         if best_among_who_rated.size > 0:
             # Compute the rating of the item
-            sum_similarities = np.sum(similarities[best_among_who_rated])
+            sum_similarities = np.sum(np.abs(similarities[best_among_who_rated]))
             bawr_similarities = similarities[best_among_who_rated]
             bawr_ratings_item = orig_utility_matrix[item_index, best_among_who_rated]
-            bawr_avg_ratings_item = np.nanmean(
-                orig_utility_matrix[:, best_among_who_rated]
-            )
             rating_of_item = (
-                avg_rating_user
-                + np.sum(bawr_similarities * bawr_ratings_item - bawr_avg_ratings_item)
-                / sum_similarities
+                np.sum(bawr_similarities * (bawr_ratings_item)) / sum_similarities
             )
         else:
             rating_of_item = np.nan
@@ -98,3 +92,16 @@ def rate_all_items(orig_utility_matrix, user_index, neighborhood_size):
     # Get all ratings
     ratings = list(map(rate_one_item, range(num_items)))
     return ratings
+
+
+matrix = np.asarray(
+    [
+        [1.0, np.nan, 3.0, np.nan, np.nan, 5.0],
+        [np.nan, np.nan, 5.0, 4.0, np.nan, np.nan],
+        [2.0, 4.0, np.nan, 1.0, 2.0, np.nan],
+        [np.nan, 2.0, 4.0, np.nan, 5.0, np.nan],
+        [np.nan, np.nan, 4.0, 3.0, 4.0, 2.0],
+        [1.0, np.nan, 3.0, np.nan, 3.0, np.nan],
+    ]
+)
+print(rate_all_items(matrix, 0, 2))
